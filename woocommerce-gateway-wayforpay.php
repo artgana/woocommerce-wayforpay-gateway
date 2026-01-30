@@ -238,10 +238,10 @@ function woocommerce_wayforpay_init()
 			}
 			$hash = implode(';', $hash);
 			if ($hashOnly) {
-		return base64_encode($hash);
-		} else {
+				return base64_encode($hash);
+			} else {
 				return hash_hmac('md5', $hash, $this->secretKey);
-		}
+			}
 		}
 
 		/**
@@ -255,7 +255,7 @@ function woocommerce_wayforpay_init()
 			$data['merchantTransactionSecureType'] = 'AUTO';
 
 			$data['merchantSignature'] = $this->getRequestSignature($data);
-		$data['signString'] = $this->getSignature($data, $this->keysForSignature, true);
+			$data['signString'] = $this->getSignature($data, $this->keysForSignature, true);
 			return $this->generateForm($data);
 		}
 
@@ -280,8 +280,8 @@ function woocommerce_wayforpay_init()
 	</script>";
 
 			return $form .
-			"<input type='submit' style='display:none;' /></form>"
-			. $button;
+				"<input type='submit' style='display:none;' /></form>"
+				. $button;
 		}
 
 		/**
@@ -388,23 +388,23 @@ function woocommerce_wayforpay_init()
 			);
 
 			$items = $order->get_items();
-		if (
-		is_array($items) &&
+			if (
+				is_array($items) &&
 				!empty($items)
-		) {
+			) {
 				foreach ($items as $item) {
-//		    $wayforpay_args['productName'][] = esc_html($item['name']);
-			$wayforpay_args['productName'][] = $item['name'];
-			$wayforpay_args['productCount'][] = $item['qty'];
-//		    $wayforpay_args['productPrice'][] = $item['line_total'];
-			$wayforpay_args['productPrice'][] = round($item['line_total']/$item['qty'],2);
-		}
-		} else {
-//		$wayforpay_args['productName'][] = esc_html($wayforpay_args['orderReference']);
-		$wayforpay_args['productName'][] = $wayforpay_args['orderReference'];
-		$wayforpay_args['productCount'][] = 1;
-		$wayforpay_args['productPrice'][] = $wayforpay_args['amount'];
-		}
+		//		    $wayforpay_args['productName'][] = esc_html($item['name']);
+					$wayforpay_args['productName'][] = $item['name'];
+					$wayforpay_args['productCount'][] = $item['qty'];
+		//		    $wayforpay_args['productPrice'][] = $item['line_total'];
+					$wayforpay_args['productPrice'][] = round($item['line_total']/$item['qty'],2);
+				}
+			} else {
+		//		$wayforpay_args['productName'][] = esc_html($wayforpay_args['orderReference']);
+				$wayforpay_args['productName'][] = $wayforpay_args['orderReference'];
+				$wayforpay_args['productCount'][] = 1;
+				$wayforpay_args['productPrice'][] = $wayforpay_args['amount'];
+			}
 			$phone = $order->billing_phone;
 			$phone = str_replace(array('+', ' ', '(', ')'), array('', '', '', ''), $phone);
 			if (strlen($phone) == 10) {
@@ -452,15 +452,11 @@ function woocommerce_wayforpay_init()
 		 */
 		private function getCallbackUrl($service = false)
 		{
-
 			$redirect_url = ($this->redirect_page_id == "" || $this->redirect_page_id == 0) ? get_site_url() . "/" : get_permalink($this->redirect_page_id);
 			if (!$service) {
-		if (
-			isset($this->settings['returnUrl_m']) &&
-			trim($this->settings['returnUrl_m']) !== ''
-		) {
-			return trim($this->settings['returnUrl_m']);
-		}
+				if (isset($this->settings['returnUrl_m']) && trim($this->settings['returnUrl_m']) !== '') {
+					return trim($this->settings['returnUrl_m']);
+				}
 				return $redirect_url;
 			}
 
@@ -505,7 +501,7 @@ function woocommerce_wayforpay_init()
 				$order->update_status('cancelled');
 				$order->add_order_note(__('Refund payment.', 'woocommerce-wayforpay-payments'));
 				return true;
-		}
+			}
 
 			$woocommerce->cart->empty_cart();
 
