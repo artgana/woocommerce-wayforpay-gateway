@@ -1,8 +1,8 @@
 <?php
 /*
 Plugin Name: WooCommerce WayForPay Payments
-Description: Wayforpay Payment Gateway for WooCommerce.
-Version: 1.0
+Description: Forked Wayforpay Payment Gateway for WooCommerce.
+Version: 1.1
 Author: support@wayforpay.com
 Author URI: http://wayforpay.com/
 License: GNU General Public License v3.0
@@ -13,7 +13,7 @@ add_action('plugins_loaded', 'woocommerce_wayforpay_init', 0);
 define('IMGDIR', WP_PLUGIN_URL . "/" . plugin_basename(dirname(__FILE__)) . '/assets/img/');
 load_plugin_textdomain( 'woocommerce-wayforpay-payments', false, plugin_basename(dirname(__FILE__)) . '/languages/' );
 
-function woocommerce_wayforpay_init()
+function woocommerce_wayforpay_init(): void
 {
 	if (!class_exists('WC_Payment_Gateway')) {
 		return;
@@ -22,7 +22,7 @@ function woocommerce_wayforpay_init()
 	if (isset($_GET['msg']) && !empty($_GET['msg'])) {
 		add_action('the_content', 'showWayForPayMessage');
 	}
-	function showWayForPayMessage($content)
+	function showWayForPayMessage($content): string
 	{
 		return '<div class="' . htmlentities($_GET['type']) . '">' . htmlentities(urldecode($_GET['msg'])) . '</div>' . $content;
 	}
@@ -106,7 +106,7 @@ function woocommerce_wayforpay_init()
 			add_action('woocommerce_receipt_wayforpay', array(&$this, 'receipt_page'));
 		}
 
-		function init_form_fields()
+		function init_form_fields(): void
 		{
 			$this->form_fields = array('enabled' => array('title' => __('Enable/Disable', 'woocommerce-wayforpay-payments'),
 				'type' => 'checkbox',
@@ -141,22 +141,28 @@ function woocommerce_wayforpay_init()
 					'default' => 'yes',
 					'description' => __('Tick to show wayforpay.com logo', 'woocommerce-wayforpay-payments'),
 					'desc_tip' => true),
-				'returnUrl' => array('title' => __('Return URL', 'woocommerce-wayforpay-payments'),
-					'type' => 'select',
-					'options' => $this->wayforpay_get_pages(__('Select Page', 'woocommerce-wayforpay-payments')),
-					'description' => __('URL of success page', 'woocommerce-wayforpay-payments'),
-					'desc_tip' => true),
-				'returnUrl_m' => array('title' => __('or specify', 'woocommerce-wayforpay-payments'),
-					'type' => 'text',
-					'description' => __('URL of success page', 'woocommerce-wayforpay-payments'),
-					'default' => '',
-					'desc_tip' => true
+				'delay' => array('title' => __('Delay before redirecting to payment site, in ms', 'woocommerce-wayforpay-payments'),
+					'type' => 'number',
+					'description' => __('', 'woocommerce-wayforpay-payments'),
+					'desc_tip' => false,
+					'default' => '500',
 				),
-				'serviceUrl' => array('title' => __('Service URL', 'woocommerce-wayforpay-payments'),
-					'options' => $this->wayforpay_get_pages(__('Select Page', 'woocommerce-wayforpay-payments')),
-					'type' => 'select',
-					'description' => __('URL with result of transaction page', 'woocommerce-wayforpay-payments'),
-					'desc_tip' => true)
+//				'returnUrl' => array('title' => __('Return URL', 'woocommerce-wayforpay-payments'),
+//					'type' => 'select',
+//					'options' => $this->wayforpay_get_pages(__('Select Page', 'woocommerce-wayforpay-payments')),
+//					'description' => __('URL of success page', 'woocommerce-wayforpay-payments'),
+//					'desc_tip' => true),
+//				'returnUrl_m' => array('title' => __('or specify', 'woocommerce-wayforpay-payments'),
+//					'type' => 'text',
+//					'description' => __('URL of success page', 'woocommerce-wayforpay-payments'),
+//					'default' => '',
+//					'desc_tip' => true
+//				),
+//				'serviceUrl' => array('title' => __('Service URL', 'woocommerce-wayforpay-payments'),
+//					'options' => $this->wayforpay_get_pages(__('Select Page', 'woocommerce-wayforpay-payments')),
+//					'type' => 'select',
+//					'description' => __('URL with result of transaction page', 'woocommerce-wayforpay-payments'),
+//					'desc_tip' => true)
 			);
 		}
 
@@ -164,7 +170,7 @@ function woocommerce_wayforpay_init()
 		 * Admin Panel Options
 		 * - Options for bits like 'title' and availability on a country-by-country basis
 		 **/
-		public function admin_options()
+		public function admin_options(): void
 		{
 			echo '<h3>' . __('WayForPay.com', 'woocommerce-wayforpay-payments') . '</h3>';
 			echo '<p>' . __('Payment gateway', 'woocommerce-wayforpay-payments') . '</p>';
@@ -177,7 +183,7 @@ function woocommerce_wayforpay_init()
 		/**
 		 *  There are no payment fields for techpro, but we want to show the description if set.
 		 **/
-		function payment_fields()
+		function payment_fields(): void
 		{
 			if ($this->description) {
 				echo wpautop(wptexturize($this->description));
@@ -186,13 +192,90 @@ function woocommerce_wayforpay_init()
 
 		/**
 		 * Receipt Page
+		 * FIXED: Added payment status check and improved UI
 		 **/
-		function receipt_page($order)
+		function receipt_page($order_id): void
 		{
 			global $woocommerce;
 
-			echo '<p>' . __('Thank you for your order, you will now be redirected to the WayForPay payment page.', 'woocommerce-wayforpay-payments') . '</p>';
-			echo $this->generate_wayforpay_form($order);
+			$order = new WC_Order($order_id);
+
+			// FIX #3: Check if order is already paid - don't redirect to payment again
+			if ($order->is_paid() || in_array($order->get_status(), array('processing', 'completed'))) {
+				echo '<div class="woocommerce-message">' .
+					__('Thank you! This order has been paid successfully.', 'woocommerce-wayforpay-payments') .
+					'</div>';
+
+				echo '<h2>' . __('Order Details', 'woocommerce-wayforpay-payments') . '</h2>';
+
+				// Display order details
+				echo '<ul class="order_details">';
+				echo '<li>' . __('Order number:', 'woocommerce-wayforpay-payments') . ' <strong>' . $order->get_order_number() . '</strong></li>';
+				echo '<li>' . __('Date:', 'woocommerce-wayforpay-payments') . ' <strong>' . date_i18n(get_option('date_format'), strtotime($order->order_date)) . '</strong></li>';
+				echo '<li>' . __('Total:', 'woocommerce-wayforpay-payments') . ' <strong>' . $order->get_formatted_order_total() . '</strong></li>';
+				echo '<li>' . __('Payment method:', 'woocommerce-wayforpay-payments') . ' <strong>' . $order->payment_method_title . '</strong></li>';
+				echo '</ul>';
+
+				return;
+			}
+
+			// FIX #1: Enhanced UI with loading overlay and clear message
+			echo '<style>
+                .wayforpay-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(255, 255, 255, 0.95);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 999999;
+                }
+                .wayforpay-message {
+                    text-align: center;
+                    padding: 40px;
+                    max-width: 500px;
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }
+                .wayforpay-message h2 {
+                    color: #2c3e50;
+                    margin-bottom: 20px;
+                    font-size: 24px;
+                }
+                .wayforpay-message p {
+                    color: #7f8c8d;
+                    font-size: 16px;
+                    line-height: 1.6;
+                }
+                .wayforpay-spinner {
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #3498db;
+                    border-radius: 50%;
+                    width: 50px;
+                    height: 50px;
+                    animation: wayforpay-spin 1s linear infinite;
+                    margin: 20px auto;
+                }
+                @keyframes wayforpay-spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>';
+
+			echo '<div class="wayforpay-overlay">
+                <div class="wayforpay-message">
+                    <h2>' . __('Thank you for your order!', 'woocommerce-wayforpay-payments') . '</h2>
+                    <div class="wayforpay-spinner"></div>
+                    <p>' . __('You will be redirected to the secure payment page in a moment...', 'woocommerce-wayforpay-payments') . '</p>
+                    <p style="font-size: 14px; margin-top: 15px;">' . __('Please do not close this window.', 'woocommerce-wayforpay-payments') . '</p>
+                </div>
+            </div>';
+
+			echo $this->generate_wayforpay_form($order_id);
 
 			$woocommerce->cart->empty_cart();
 		}
@@ -201,7 +284,7 @@ function woocommerce_wayforpay_init()
 		 * @param $options
 		 * @return string
 		 */
-		public function getRequestSignature($options)
+		public function getRequestSignature($options): string
 		{
 			return $this->getSignature($options, $this->keysForSignature);
 		}
@@ -210,7 +293,7 @@ function woocommerce_wayforpay_init()
 		 * @param $options
 		 * @return string
 		 */
-		public function getResponseSignature($options)
+		public function getResponseSignature($options): string
 		{
 			return $this->getSignature($options, $this->keysForResponseSignature);
 		}
@@ -221,7 +304,7 @@ function woocommerce_wayforpay_init()
 		 * @param $hashOnly
 		 * @return string
 		 */
-		public function getSignature($option, $keys, $hashOnly = false)
+		public function getSignature($option, $keys, $hashOnly = false): string
 		{
 			$hash = array();
 			foreach ($keys as $dataKey) {
@@ -247,7 +330,7 @@ function woocommerce_wayforpay_init()
 		/**
 		 * @return $this
 		 */
-		public function fillPayForm($data)
+		public function fillPayForm($data): string
 		{
 			$data['merchantAccount'] = $this->merchant_id;
 			$data['merchantAuthType'] = 'simpleSignature';
@@ -262,22 +345,25 @@ function woocommerce_wayforpay_init()
 
 		/**
 		 * Generate form with fields
+		 * FIXED: Increased redirect delay from 200ms to 500ms for better UX
 		 *
 		 * @param $data
 		 * @return string
 		 */
-		protected function generateForm($data)
+		protected function generateForm($data): string
 		{
 			$form = '<form method="post" id="form_wayforpay" action="' . $this->url . '" accept-charset="utf-8">';
 			foreach ($data as $k => $v) $form .= $this->printInput($k, $v);
-			$button = "<img style='position:absolute; top:50%; left:47%; margin-top:-125px; margin-left:-60px;' src='' >
-	<script>
-		function submitWayForPayForm()
-		{
-			document.getElementById('form_wayforpay').submit();
-		}
-		setTimeout( submitWayForPayForm, 200 );
-	</script>";
+
+			// FIX #1: Changed timeout from 200ms to 500ms for better visibility of a loading message
+			$delay = (int) ($this->settings['delay'] ?? 500);
+			$button = "<script>
+				function submitWayForPayForm()
+				{
+					document.getElementById('form_wayforpay').submit();
+				}
+				setTimeout( submitWayForPayForm, " . json_encode($delay) . ")
+			</script>";
 
 			return $form .
 				"<input type='submit' style='display:none;' /></form>"
@@ -291,7 +377,7 @@ function woocommerce_wayforpay_init()
 		 * @param $val
 		 * @return string
 		 */
-		protected function printInput($name, $val)
+		protected function printInput($name, $val): string
 		{
 			$str = "";
 			if (!is_array($val)) return '<input type="hidden" name="' . $name . '" value="' . htmlspecialchars($val) . '">' . "\n<br />";
@@ -364,8 +450,9 @@ function woocommerce_wayforpay_init()
 
 		/**
 		 * Generate wayforpay button link
+		 * FIXED: Proper return URL construction
 		 **/
-		function generate_wayforpay_form($order_id)
+		function generate_wayforpay_form($order_id): string
 		{
 			$order = new WC_Order($order_id);
 
@@ -377,12 +464,15 @@ function woocommerce_wayforpay_init()
 				get_woocommerce_currency()
 			);
 
+			// FIX #2: Build proper return URL pointing to order-pay page
+			$return_url = $this->getCallbackUrl(false, $order_id, $order->order_key);
+
 			$wayforpay_args = array(
 				'orderReference' => $order_id . self::ORDER_SUFFIX.time(),
 				'orderDate' => strtotime($orderDate),
 				'currency' => $currency,
 				'amount' => $order->get_total(),
-				'returnUrl' => $this->getCallbackUrl().'?key='.$order->order_key.'&order='.$order_id,
+				'returnUrl' => $return_url,
 				'serviceUrl' => $this->getCallbackUrl(true),
 				'language' => $this->getLanguage()
 			);
@@ -393,14 +483,11 @@ function woocommerce_wayforpay_init()
 				!empty($items)
 			) {
 				foreach ($items as $item) {
-		//		    $wayforpay_args['productName'][] = esc_html($item['name']);
 					$wayforpay_args['productName'][] = $item['name'];
 					$wayforpay_args['productCount'][] = $item['qty'];
-		//		    $wayforpay_args['productPrice'][] = $item['line_total'];
 					$wayforpay_args['productPrice'][] = round($item['line_total']/$item['qty'],2);
 				}
 			} else {
-		//		$wayforpay_args['productName'][] = esc_html($wayforpay_args['orderReference']);
 				$wayforpay_args['productName'][] = $wayforpay_args['orderReference'];
 				$wayforpay_args['productCount'][] = 1;
 				$wayforpay_args['productPrice'][] = $wayforpay_args['amount'];
@@ -430,7 +517,7 @@ function woocommerce_wayforpay_init()
 		/**
 		 * Process the payment and return the result
 		 **/
-		function process_payment($order_id)
+		function process_payment($order_id): array
 		{
 			$order = new WC_Order($order_id);
 
@@ -447,23 +534,58 @@ function woocommerce_wayforpay_init()
 		}
 
 		/**
+		 * FIX #2: Enhanced callback URL generation with proper order-pay URL
+		 *
 		 * @param bool $service
-		 * @return bool|string
+		 * @param int $order_id
+		 * @param string $order_key
+		 * @return string
 		 */
-		private function getCallbackUrl($service = false)
+		private function getCallbackUrl($service = false, $order_id = null, $order_key = null): string
 		{
-			$redirect_url = ($this->redirect_page_id == "" || $this->redirect_page_id == 0) ? get_site_url() . "/" : get_permalink($this->redirect_page_id);
 			if (!$service) {
+				// Check for manual return URL first
 				if (isset($this->settings['returnUrl_m']) && trim($this->settings['returnUrl_m']) !== '') {
 					return trim($this->settings['returnUrl_m']);
 				}
+
+				// FIX #2: Build proper WooCommerce order-received URL (thank-you page)
+				if ($order_id && $order_key) {
+					if (version_compare(WOOCOMMERCE_VERSION, '2.1.0', '>=')) {
+						// Use WooCommerce built-in method for order-received URL
+						$order = new WC_Order($order_id);
+						return $order->get_checkout_order_received_url(); // Returns to the thank-you page
+					} else {
+						// Manually construct for older WooCommerce versions
+						$order_received_url = get_permalink(get_option('woocommerce_thanks_page_id'));
+						if (!$order_received_url) {
+							$order_received_url = get_permalink(get_option('woocommerce_checkout_page_id'));
+						}
+						return add_query_arg(
+							'key',
+							$order_key,
+							add_query_arg('order-received', $order_id, $order_received_url)
+						);
+					}
+				}
+
+				// Fallback to configured page or homepage
+				$redirect_url = ($this->redirect_page_id == "" || $this->redirect_page_id == 0)
+					? get_site_url() . "/"
+					: get_permalink($this->redirect_page_id);
+
 				return $redirect_url;
 			}
+
+			// Service URL for payment status callback
+			$redirect_url = ($this->redirect_page_id == "" || $this->redirect_page_id == 0)
+				? get_site_url() . "/"
+				: get_permalink($this->redirect_page_id);
 
 			return add_query_arg('wc-api', get_class($this), $redirect_url);
 		}
 
-		private function getLanguage()
+		private function getLanguage(): string
 		{
 			return substr(get_bloginfo('language'), 0, 2);
 		}
@@ -492,7 +614,6 @@ function woocommerce_wayforpay_init()
 
 			if ($response['transactionStatus'] == self::ORDER_APPROVED) {
 
-//                $order->update_status('processing');
 				$order->update_status('completed');
 				$order->payment_complete();
 				$order->add_order_note( __('WayForPay payment successful.<br/>WayForPay ID: ', 'woocommerce-wayforpay-payments') . ' (' . (isset($response['orderReference'])?$response['orderReference']:'-') . ')');
@@ -525,7 +646,7 @@ function woocommerce_wayforpay_init()
 		}
 
 		// get all pages
-		function wayforpay_get_pages($title = false, $indent = true)
+		function wayforpay_get_pages($title = false, $indent = true): array
 		{
 			$wp_pages = get_pages('sort_column=menu_order');
 			$page_list = array();

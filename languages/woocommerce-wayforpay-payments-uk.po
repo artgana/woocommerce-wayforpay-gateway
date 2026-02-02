@@ -75,6 +75,10 @@ msgstr "Показати логотип"
 msgid "Show the wayforpay.com logo in the Payment Method section for the user"
 msgstr "Показувати покупцю логотип wayforpay.com у розділі \"Спосіб оплати\""
 
+#: woocommerce-gateway-wayforpay.php:144
+msgid "Delay before redirecting to payment site, in ms"
+msgstr "Затримка перед перенаправленням на сайт оплати, в мс"
+
 #: woocommerce-gateway-wayforpay.php:137
 msgid "Tick to show wayforpay.com logo"
 msgstr "Поставте позначку, щоб показати логотип wayforpay.com"
@@ -138,3 +142,15 @@ msgstr "Повернення платежу."
 #: woocommerce-gateway-wayforpay.php:518
 msgid "Thank you for shopping with us. Your account has been charged and your transaction is successful."
 msgstr "Дякуємо за покупки. Ваша трансакція виконана успішно і з вашого рахунку стягнено кошти."
+
+#: woocommerce-gateway-wayforpay.php:271
+msgid "Thank you for your order!"
+msgstr "Дякуємо за ваше замовлення!"
+
+#: woocommerce-gateway-wayforpay.php:273
+msgid "You will be redirected to the secure payment page in a moment..."
+msgstr "За мить ви будете перенаправлені на безпечну сторінку оплати..."
+
+#: woocommerce-gateway-wayforpay.php:274
+msgid "Please do not close this window."
+msgstr "Будь ласка, не закривайте це вікно."

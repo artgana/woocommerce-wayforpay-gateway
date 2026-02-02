@@ -79,6 +79,10 @@ msgstr ""
 msgid "Tick to show wayforpay.com logo"
 msgstr ""
 
+#: woocommerce-gateway-wayforpay.php:144
+msgid "Delay before redirecting to payment site, in ms"
+msgstr ""
+
 #: woocommerce-gateway-wayforpay.php:139
 msgid "Return URL"
 msgstr ""
@@ -139,4 +143,16 @@ msgstr ""
 
 #: woocommerce-gateway-wayforpay.php:518
 msgid "Thank you for shopping with us. Your account has been charged and your transaction is successful."
+msgstr ""
+
+#: woocommerce-gateway-wayforpay.php:271
+msgid "Thank you for your order!"
+msgstr ""
+
+#: woocommerce-gateway-wayforpay.php:273
+msgid "You will be redirected to the secure payment page in a moment..."
+msgstr ""
+
+#: woocommerce-gateway-wayforpay.php:274
+msgid "Please do not close this window."
 msgstr ""
