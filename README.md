@@ -12,4 +12,14 @@
 У полі “Merchant Login” необхідно вставити MERCHANT LOGIN.
 У полі “Merchant Secret key” – вставте, будь ласка, MERCHANT SECRET KEY.
 
-![Settings](https://github.com/wayforpay/Word-Press-Woocommerce/blob/master/settings.png)
+![Settings](https://github.com/artgana/woocommerce-wayforpay-gateway/blob/master/settings.png)
+
+## Відмінності від оригінального плагіну
+1. Встановлено мінімальну версію PHP 7.4, WordPress 6.2 та WooCommerce 8.2 
+2. Виправлено завантаження локалізації, відповідно до змін у WordPress 6.7
+3. Додано поп-ап з повідомленням про переадресацію на сайт платіжної системи 
+
+![Modal](https://github.com/artgana/woocommerce-wayforpay-gateway/blob/master/modal.png)
+
+4. Додано опцію вибору часу, через який буде перенаправлено на сайт платіжної системи
+5. Змінено повернення після платежу — тепер повертає завжди на сторінку підтвердження замовлення

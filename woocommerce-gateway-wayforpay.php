@@ -5,13 +5,28 @@ Description: Forked Wayforpay Payment Gateway for WooCommerce.
 Version: 1.1
 Author: support@wayforpay.com
 Author URI: http://wayforpay.com/
+Text Domain: woocommerce-wayforpay-gateway
+Domain Path: /languages
+Requires PHP: 7.4
+Requires at least: 6.2
+Tested up to: 6.7
+Requires Plugins: woocommerce
+WC requires at least: 8.2
+WC tested up to: 9.6
 License: GNU General Public License v3.0
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 */
 
 add_action('plugins_loaded', 'woocommerce_wayforpay_init', 0);
 define('IMGDIR', WP_PLUGIN_URL . "/" . plugin_basename(dirname(__FILE__)) . '/assets/img/');
-load_plugin_textdomain( 'woocommerce-wayforpay-payments', false, plugin_basename(dirname(__FILE__)) . '/languages/' );
+add_action( 'init', 'woocommerce_wayforpay_gateway_i18n' );
+
+/**
+ * Register the plugin's text domain.
+ */
+function woocommerce_wayforpay_gateway_i18n(): void {
+	load_plugin_textdomain( 'woocommerce-wayforpay-payments', false, plugin_basename(dirname(__FILE__)) . '/languages/' );
+}
 
 function woocommerce_wayforpay_init(): void
 {
